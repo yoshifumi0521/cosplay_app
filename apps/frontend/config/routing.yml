@@ -1,3 +1,7 @@
+tumblr_upload:
+  url:   /tumblr/upload
+  param: { module: tumblr, action: upload }
+
 # default rules
 homepage:
   url:   /
