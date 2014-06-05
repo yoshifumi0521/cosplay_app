@@ -35,11 +35,15 @@ class tumblrActions extends sfActions
 
             include 'HTTP/OAuth/Consumer.php';
 
-            $base_hostname = 'cosplay-test.tumblr.com';
-            $consumer_key = 'mLZUpz2KlovuU2UqJAMcvGKh9cGlBOK4VXWlwVSePxlAsZbmng';
-            $consumer_secret = 'B4TsOcgFBxbWIQZ27SjCRjHzO3AS2S05chFg9nParwQdx1LdEq';
-            $oauth_token = 'lxpPpfMTy4pIrKWwhCXG8UyUlRrtryH2J79cRz7T4E0gAsilDQ';
-            $oauth_token_secret = 'hEuumFYJ9xObyvQHYXxzixs4QubQqJh085OjLCTxKRY8LLagKc';
+            $this->custom = Spyc::YAMLLoad(SF_ROOT_DIR.'/config/custom.yml');
+
+
+
+            $base_hostname = $this->custom['core']['base_hostname'];
+            $consumer_key = $this->custom['core']['consumer_key'];
+            $consumer_secret = $this->custom['core']['consumer_secret'];
+            $oauth_token = $this->custom['core']['oauth_token'];
+            $oauth_token_secret = $this->custom['core']['oauth_token_secret'];
 
             $http_request = new HTTP_Request2();
             $http_request->setConfig('ssl_verify_peer', false);
@@ -52,20 +56,55 @@ class tumblrActions extends sfActions
             $consumer->setToken($oauth_token);
             $consumer->setTokenSecret($oauth_token_secret);
 
+            //画像を保存する。
+            $fileName = $this->getRequest()->getFileName('image');
+
+            // $thumbnail = new sfThumbnail(150, 150);
+            // $thumbnail->loadFile($this->getRequest()->getFilePath('image'));
+            // $thumbnail->save(sfConfig::get('sf_upload_dir').'/thumbnail/'.$fileName, 'image/png');
+
+            // $this->getRequest()->moveFile('thumbnail', sfConfig::get('sf_upload_dir').'/'.$fileName);
+
+            $image = new sfThumbnail(800,600);
+            $image->loadFile($this->getRequest()->getFilePath('image'));
+            $image->save(sfConfig::get('sf_upload_dir').'/thumbnail/'.$fileName, 'image/jpeg');
+
+            // var_dump(base64_encode(file_get_contents('/uploads/thumbnail/tumblr_n6p6c0s0Uy1tdgnn9o1_1280%202.jpg')));
+            // die();
+
+
+            if($this->getRequestParameter('id_check') == 1)
+            {
+                $caption = '<a href="'.$this->getRequestParameter('profile_url').'" target="_blank">'.$this->getRequestParameter('id').'</a>';
+            }
+            else
+            {
+                $caption = "";
+            }
+
+            $tags = $this->getRequestParameter('area').",".$this->getRequestParameter('tag');
+
             //photoの投稿
             $params = array(
                 'type' => 'photo',
-                'caption' => 'キャプション',
+                'caption' => $caption,
+                'tags' => $tags,
                 //画像のリンクがある場合
+                // 'source' => base64_encode(file_get_contents('/uploads/thumbnail/tumblr_n6p6c0s0Uy1tdgnn9o1_1280%202.jpg')),
+                // 'source' => $this->custom['core']['domain'].'uploads/thumbnail/tumblr_n6p6c0s0Uy1tdgnn9o1_1280%202.jpg',
                 'source' => 'http://www.omnioo.com/record/wp-content/uploads/kuroki-889x500.jpg',
             );
 
 
             $api_url = 'http://api.tumblr.com/v2/blog/cosplay-test.tumblr.com/post';
             $response = $consumer->sendRequest($api_url, $params);
-            var_dump($response);
 
+            $r = array();
+            $r["Status"] = 1;
 
+            //jsonを出力
+            echo json_encode($r);
+            die();
 
 
 
